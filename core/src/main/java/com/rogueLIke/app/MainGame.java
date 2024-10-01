@@ -26,7 +26,7 @@ public class MainGame implements ApplicationListener {
         character = new Texture(Gdx.files.internal("character.png"));
         map = new Texture(Gdx.files.internal("map.png"));
         spriteBatch = new SpriteBatch();
-        viewport = new FitViewport(800, 600); // Adjusting the window size for a larger view
+        viewport = new FitViewport(8000, 6000); // Adjusting the window size for a larger view
     }
 
     @Override
@@ -42,7 +42,7 @@ public class MainGame implements ApplicationListener {
     }
 
     public void render(float delta) {
-        // 1. Clear the screen with a different color (e.g., red) to ensure it's working
+        // 1. Clear the screen with a different color (e.g., black)
         ScreenUtils.clear(Color.BLACK);
 
         // 2. Apply the viewport and set the projection matrix
@@ -50,44 +50,51 @@ public class MainGame implements ApplicationListener {
         spriteBatch.setProjectionMatrix(viewport.getCamera().combined);
 
         // 3. Define movement speed (e.g., 100 pixels per second)
-        float speed = 500 * delta;  // Adjust speed by delta time for smooth movement
+        float speed = 10000 * delta;  // Adjust speed by delta time for smooth movement
 
-        // 4. Check for user input and move the character
-        if (Gdx.input.isKeyPressed(com.badlogic.gdx.Input.Keys.W)) {
+        // 4. Define the movement boundaries
+        float minX = 0;                           // Left boundary
+        float maxX = viewport.getWorldWidth();     // Right boundary (based on viewport size)
+        float minY = 0;                           // Bottom boundary
+        float maxY = viewport.getWorldHeight();    // Top boundary (based on viewport size)
+
+        // 5. Check for user input and move the character
+        if (Gdx.input.isKeyPressed(com.badlogic.gdx.Input.Keys.W) && characterY + speed < maxY) {
             characterY += speed;  // Move up
         }
-        if (Gdx.input.isKeyPressed(com.badlogic.gdx.Input.Keys.S)) {
+        if (Gdx.input.isKeyPressed(com.badlogic.gdx.Input.Keys.S) && characterY - speed > minY) {
             characterY -= speed;  // Move down
         }
-        if (Gdx.input.isKeyPressed(com.badlogic.gdx.Input.Keys.A)) {
+        if (Gdx.input.isKeyPressed(com.badlogic.gdx.Input.Keys.A) && characterX - speed > minX) {
             characterX -= speed;  // Move left
         }
-        if (Gdx.input.isKeyPressed(com.badlogic.gdx.Input.Keys.D)) {
+        if (Gdx.input.isKeyPressed(com.badlogic.gdx.Input.Keys.D) && characterX + speed < maxX) {
             characterX += speed;  // Move right
         }
-        if (Gdx.input.isKeyPressed(Input.Keys.UP)) {
+        if (Gdx.input.isKeyPressed(Input.Keys.UP) && characterY + speed < maxY) {
             characterY += speed;  // Move up
         }
-        if (Gdx.input.isKeyPressed(Input.Keys.DOWN)) {
+        if (Gdx.input.isKeyPressed(Input.Keys.DOWN) && characterY - speed > minY) {
             characterY -= speed;  // Move down
         }
-        if (Gdx.input.isKeyPressed(Input.Keys.LEFT)) {
+        if (Gdx.input.isKeyPressed(Input.Keys.LEFT) && characterX - speed > minX) {
             characterX -= speed;  // Move left
         }
-        if (Gdx.input.isKeyPressed(Input.Keys.RIGHT)) {
+        if (Gdx.input.isKeyPressed(Input.Keys.RIGHT) && characterX + speed < maxX) {
             characterX += speed;  // Move right
         }
+        if (Gdx.input.isKeyPressed(com.badlogic.gdx.Input.Keys.SPACE)) {}
 
-        // 5. Begin the spriteBatch to draw textures
+        // 6. Begin the spriteBatch to draw textures
         spriteBatch.begin();
 
-        // 6. Draw the map (background) first, so the character is drawn on top
-       // spriteBatch.draw(map, 0, 0);
+        // 7. Draw the map (background) first, so the character is drawn on top
+        // spriteBatch.draw(map, 0, 0);
 
-        // 7. Define the scale factor (e.g., 0.5 for half size)
-        float scaleFactor = 0.025f;
+        // 8. Define the scale factor (e.g., 0.5 for half size)
+        float scaleFactor = 0.25f;
 
-        // 8. Draw the character texture at the updated position, scaling its size
+        // 9. Draw the character texture at the updated position, scaling its size
         spriteBatch.draw(
             character,
             characterX,
@@ -96,9 +103,10 @@ public class MainGame implements ApplicationListener {
             character.getHeight() * scaleFactor
         );
 
-        // 9. End the spriteBatch
+        // 10. End the spriteBatch
         spriteBatch.end();
     }
+
 
 
     @Override
