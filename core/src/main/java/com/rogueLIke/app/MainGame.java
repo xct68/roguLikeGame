@@ -2,6 +2,7 @@ package com.rogueLIke.app;
 
 import com.badlogic.gdx.ApplicationListener;
 import com.badlogic.gdx.Gdx;
+import com.badlogic.gdx.Input;
 import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
@@ -41,27 +42,64 @@ public class MainGame implements ApplicationListener {
     }
 
     public void render(float delta) {
-        // 1. Clear the screen with a different color (e.g., blue) to ensure it's working
-        ScreenUtils.clear(Color.RED);
-        int width = 1;
-        int height = 1;
+        // 1. Clear the screen with a different color (e.g., red) to ensure it's working
+        ScreenUtils.clear(Color.BLACK);
 
         // 2. Apply the viewport and set the projection matrix
         viewport.apply();
         spriteBatch.setProjectionMatrix(viewport.getCamera().combined);
 
-        // 3. Begin the spriteBatch to draw textures
+        // 3. Define movement speed (e.g., 100 pixels per second)
+        float speed = 500 * delta;  // Adjust speed by delta time for smooth movement
+
+        // 4. Check for user input and move the character
+        if (Gdx.input.isKeyPressed(com.badlogic.gdx.Input.Keys.W)) {
+            characterY += speed;  // Move up
+        }
+        if (Gdx.input.isKeyPressed(com.badlogic.gdx.Input.Keys.S)) {
+            characterY -= speed;  // Move down
+        }
+        if (Gdx.input.isKeyPressed(com.badlogic.gdx.Input.Keys.A)) {
+            characterX -= speed;  // Move left
+        }
+        if (Gdx.input.isKeyPressed(com.badlogic.gdx.Input.Keys.D)) {
+            characterX += speed;  // Move right
+        }
+        if (Gdx.input.isKeyPressed(Input.Keys.UP)) {
+            characterY += speed;  // Move up
+        }
+        if (Gdx.input.isKeyPressed(Input.Keys.DOWN)) {
+            characterY -= speed;  // Move down
+        }
+        if (Gdx.input.isKeyPressed(Input.Keys.LEFT)) {
+            characterX -= speed;  // Move left
+        }
+        if (Gdx.input.isKeyPressed(Input.Keys.RIGHT)) {
+            characterX += speed;  // Move right
+        }
+
+        // 5. Begin the spriteBatch to draw textures
         spriteBatch.begin();
 
-        // 4. Draw the map (background) first, so the character is drawn on top
-        spriteBatch.draw(map, 0, 0);
+        // 6. Draw the map (background) first, so the character is drawn on top
+       // spriteBatch.draw(map, 0, 0);
 
-        // 5. Draw the character texture at the specified position
-        spriteBatch.draw(character, characterX, characterY, character.getWidth(), character.getHeight());
+        // 7. Define the scale factor (e.g., 0.5 for half size)
+        float scaleFactor = 0.025f;
 
-        // 6. End the spriteBatch
+        // 8. Draw the character texture at the updated position, scaling its size
+        spriteBatch.draw(
+            character,
+            characterX,
+            characterY,
+            character.getWidth() * scaleFactor,
+            character.getHeight() * scaleFactor
+        );
+
+        // 9. End the spriteBatch
         spriteBatch.end();
     }
+
 
     @Override
     public void pause() {
@@ -81,3 +119,4 @@ public class MainGame implements ApplicationListener {
         spriteBatch.dispose();
     }
 }
+
