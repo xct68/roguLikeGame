@@ -17,8 +17,8 @@ public class MainGame implements ApplicationListener {
     FitViewport viewport;
 
     // Character position variables
-    float characterX = 100;
-    float characterY = 100;
+    float characterX;
+    float characterY;
 
     @Override
     public void create() {
@@ -26,19 +26,22 @@ public class MainGame implements ApplicationListener {
         character = new Texture(Gdx.files.internal("character.png"));
         map = new Texture(Gdx.files.internal("map.png"));
         spriteBatch = new SpriteBatch();
-        viewport = new FitViewport(8000, 6000); // Adjusting the window size for a larger view
+        viewport = new FitViewport(8000, 6000);// Adjusting the window size for a larger view
+        characterX = viewport.getWorldWidth() / 2;
+        characterY = viewport.getWorldHeight() / 2;
     }
 
     @Override
     public void resize(int width, int height) {
         // Resize your application here. The parameters represent the new window size.
-        viewport.update(width, height, true); // true centers the camera
+         // true centers the camera
     }
 
     @Override
     public void render() {
         // This render method will be automatically called by LibGDX
-        render(Gdx.graphics.getDeltaTime()); // Call the custom render method with delta time
+        render(Gdx.graphics.getDeltaTime());
+        viewport.update((int) characterX, (int) characterY, true);// Call the custom render method with delta time
     }
 
     public void render(float delta) {
@@ -53,7 +56,7 @@ public class MainGame implements ApplicationListener {
         float speed = 10000 * delta;  // Adjust speed by delta time for smooth movement
 
         // 4. Define the movement boundaries
-        float minX = 0;                           // Left boundary
+        float minX = 0;                              // Left boundary
         float maxX = viewport.getWorldWidth();     // Right boundary (based on viewport size)
         float minY = 0;                           // Bottom boundary
         float maxY = viewport.getWorldHeight();    // Top boundary (based on viewport size)
