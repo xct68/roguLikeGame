@@ -2,46 +2,61 @@ package com.rogueLIke.app;
 
 import com.badlogic.gdx.ApplicationListener;
 import com.badlogic.gdx.Gdx;
-import com.badlogic.gdx.Input;
+import com.badlogic.gdx.Graphics;
 import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
+import com.badlogic.gdx.math.Rectangle;
 import com.badlogic.gdx.utils.ScreenUtils;
 import com.badlogic.gdx.utils.viewport.FitViewport;
 
 /** {@link com.badlogic.gdx.ApplicationListener} implementation shared by all platforms. */
 public class MainGame implements ApplicationListener {
-    Texture character;
+    Texture pepe;
     Texture map;
     SpriteBatch spriteBatch;
     FitViewport viewport;
 
     // Character position variables
-    float characterX;
-    float characterY;
+    float pepeX;
+    float pepeY;
+
+    //Gives pepe a hitbox
+    Rectangle hitbox;
 
     @Override
     public void create() {
+        MainGame maingame = new MainGame();
         // Prepare your application here.
-        character = new Texture(Gdx.files.internal("character.png"));
+        pepe = new Texture(Gdx.files.internal("pepe.png"));
         map = new Texture(Gdx.files.internal("map.png"));
         spriteBatch = new SpriteBatch();
-        viewport = new FitViewport(8000, 6000);// Adjusting the window size for a larger view
-        characterX = viewport.getWorldWidth() / 2;
-        characterY = viewport.getWorldHeight() / 2;
+        viewport = new FitViewport(3840, 2160);// Adjusting the window size for a larger view
+        pepeX = viewport.getWorldWidth() / 2;
+        pepeY = viewport.getWorldHeight() / 2;
+
+        float scaleFactor = 0.25f;
+        hitbox = new Rectangle(pepeX, pepeY, pepe.getWidth() * scaleFactor, pepe.getHeight() * scaleFactor);
     }
 
     @Override
     public void resize(int width, int height) {
+        Graphics.DisplayMode displayMode = Gdx.graphics.getDisplayMode();
+        Gdx.graphics.setWindowedMode(1920, 1100);
+        Gdx.graphics.setUndecorated(true);
+        Gdx.graphics.setTitle("Rogue Like Game");
+        System.out.println("Window size: " + Gdx.graphics.getWidth() + "x" + Gdx.graphics.getHeight());
+
+
         // Resize your application here. The parameters represent the new window size.
-         // true centers the camera
+        viewport.update((int) pepeX, (int) pepeY, true); // true centers the camera
     }
 
     @Override
     public void render() {
         // This render method will be automatically called by LibGDX
         render(Gdx.graphics.getDeltaTime());
-        viewport.update((int) characterX, (int) characterY, true);// Call the custom render method with delta time
+        // Call the custom render method with delta time
     }
 
     public void render(float delta) {
@@ -53,7 +68,7 @@ public class MainGame implements ApplicationListener {
         spriteBatch.setProjectionMatrix(viewport.getCamera().combined);
 
         // 3. Define movement speed (e.g., 100 pixels per second)
-        float speed = 10000 * delta;  // Adjust speed by delta time for smooth movement
+        float speed = 1000 * delta;  // Adjust speed by delta time for smooth movement
 
         // 4. Define the movement boundaries
         float minX = 0;                              // Left boundary
@@ -61,49 +76,40 @@ public class MainGame implements ApplicationListener {
         float minY = 0;                           // Bottom boundary
         float maxY = viewport.getWorldHeight();    // Top boundary (based on viewport size)
 
-        // 5. Check for user input and move the character
-        if (Gdx.input.isKeyPressed(com.badlogic.gdx.Input.Keys.W) && characterY + speed < maxY) {
-            characterY += speed;  // Move up
+        // 5. Check for user input and move the pepe
+        if (Gdx.input.isKeyPressed(com.badlogic.gdx.Input.Keys.W) && hitbox.y + hitbox.height + speed < maxY) {
+            pepeY += speed;
         }
-        if (Gdx.input.isKeyPressed(com.badlogic.gdx.Input.Keys.S) && characterY - speed > minY) {
-            characterY -= speed;  // Move down
+        if (Gdx.input.isKeyPressed(com.badlogic.gdx.Input.Keys.S) && hitbox.y - speed > minY) {
+            pepeY -= speed;
         }
-        if (Gdx.input.isKeyPressed(com.badlogic.gdx.Input.Keys.A) && characterX - speed > minX) {
-            characterX -= speed;  // Move left
+        if (Gdx.input.isKeyPressed(com.badlogic.gdx.Input.Keys.A) && hitbox.x - speed > minX) {
+            pepeX -= speed;
         }
-        if (Gdx.input.isKeyPressed(com.badlogic.gdx.Input.Keys.D) && characterX + speed < maxX) {
-            characterX += speed;  // Move right
+        if (Gdx.input.isKeyPressed(com.badlogic.gdx.Input.Keys.D) && hitbox.x + hitbox.width + speed < maxX) {
+            pepeX += speed;
         }
-        if (Gdx.input.isKeyPressed(Input.Keys.UP) && characterY + speed < maxY) {
-            characterY += speed;  // Move up
-        }
-        if (Gdx.input.isKeyPressed(Input.Keys.DOWN) && characterY - speed > minY) {
-            characterY -= speed;  // Move down
-        }
-        if (Gdx.input.isKeyPressed(Input.Keys.LEFT) && characterX - speed > minX) {
-            characterX -= speed;  // Move left
-        }
-        if (Gdx.input.isKeyPressed(Input.Keys.RIGHT) && characterX + speed < maxX) {
-            characterX += speed;  // Move right
-        }
-        if (Gdx.input.isKeyPressed(com.badlogic.gdx.Input.Keys.SPACE)) {}
+
+        // Update the hitbox position to match the character's new position
+        hitbox.setPosition(pepeX, pepeY);
+
 
         // 6. Begin the spriteBatch to draw textures
         spriteBatch.begin();
 
-        // 7. Draw the map (background) first, so the character is drawn on top
+        // 7. Draw the map (background) first, so the pepe is drawn on top
         // spriteBatch.draw(map, 0, 0);
 
         // 8. Define the scale factor (e.g., 0.5 for half size)
         float scaleFactor = 0.25f;
 
-        // 9. Draw the character texture at the updated position, scaling its size
+        // 9. Draw the pepe texture at the updated position, scaling its size
         spriteBatch.draw(
-            character,
-            characterX,
-            characterY,
-            character.getWidth() * scaleFactor,
-            character.getHeight() * scaleFactor
+            pepe,
+            pepeX,
+            pepeY,
+            pepe.getWidth() * scaleFactor,
+            pepe.getHeight() * scaleFactor
         );
 
         // 10. End the spriteBatch
@@ -125,7 +131,7 @@ public class MainGame implements ApplicationListener {
     @Override
     public void dispose() {
         // Clean up your application's resources when closing.
-        character.dispose();
+        pepe.dispose();
         map.dispose();
         spriteBatch.dispose();
     }
