@@ -5,129 +5,169 @@ import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.Input;
 import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.Texture;
+import com.badlogic.gdx.graphics.g2d.Animation;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
+import com.badlogic.gdx.graphics.g2d.TextureRegion;
+import com.badlogic.gdx.math.Rectangle;
 import com.badlogic.gdx.utils.ScreenUtils;
 import com.badlogic.gdx.utils.viewport.FitViewport;
 
-/** {@link com.badlogic.gdx.ApplicationListener} implementation shared by all platforms. */
-public class MainGame implements ApplicationListener {
-    Texture character;
-    Texture map;
+public class MainGame implements ApplicationListener {//class
+    Texture characterSheet; // The sprite sheet
+    Texture map;//class attributes
     SpriteBatch spriteBatch;
     FitViewport viewport;
+
+    // Animation-related variables
+    private static final int FRAME_COLS = 8, FRAME_ROWS = 1; // Number of columns and rows in the sprite sheet
+    Animation<TextureRegion> characterAnimation; // Animation object
+    float stateTime; // Keeps track of time for animation
 
     // Character position variables
     float characterX;
     float characterY;
 
+    // Gives character a hitbox
+    Rectangle hitbox;
+
+    boolean facingLeft;
+
     @Override
     public void create() {
-        // Prepare your application here.
-        character = new Texture(Gdx.files.internal("character.png"));
+        // Load the sprite sheet with walking animation frames
+        characterSheet = new Texture(Gdx.files.internal("character_walk.png"));
+
+        // Split the sprite sheet into individual frames
+        TextureRegion[][] tmp = TextureRegion.split(characterSheet,
+            characterSheet.getWidth() / FRAME_COLS,
+            characterSheet.getHeight() / FRAME_ROWS);//assessor gets the Height from the characterSheet texture, not prior defined because fkn libGdx make life ez
+
+        // Convert 2D array to 1D array of frames
+        TextureRegion[] characterFrames = new TextureRegion[FRAME_COLS * FRAME_ROWS];
+        int index = 0;
+        for (int i = 0; i < FRAME_ROWS; i++) {
+            for (int j = 0; j < FRAME_COLS; j++) {
+                characterFrames[index++] = tmp[i][j];
+            }
+        }
+
+        // Initialize the animation with frame duration (e.g., 0.1f per frame)
+        characterAnimation = new Animation<>(0.1f, characterFrames);
+
         map = new Texture(Gdx.files.internal("map.png"));
         spriteBatch = new SpriteBatch();
-        viewport = new FitViewport(8000, 6000);// Adjusting the window size for a larger view
+        viewport = new FitViewport(2000, 1000); // Adjusting the window size for a larger view
+
         characterX = viewport.getWorldWidth() / 2;
         characterY = viewport.getWorldHeight() / 2;
+
+        float scaleFactor = 5f;
+        hitbox = new Rectangle(characterX, characterY,
+            characterSheet.getWidth() / FRAME_COLS * scaleFactor,
+            characterSheet.getHeight() * scaleFactor);
+
+        stateTime = 0f; // Start animation time tracking
     }
 
     @Override
     public void resize(int width, int height) {
-        // Resize your application here. The parameters represent the new window size.
-         // true centers the camera
+        viewport.update(width, height, true); // true centers the camera
     }
 
     @Override
     public void render() {
-        // This render method will be automatically called by LibGDX
         render(Gdx.graphics.getDeltaTime());
-        viewport.update((int) characterX, (int) characterY, true);// Call the custom render method with delta time
     }
 
     public void render(float delta) {
-        // 1. Clear the screen with a different color (e.g., black)
+        // 1. Clear the screen with black color
         ScreenUtils.clear(Color.BLACK);
 
         // 2. Apply the viewport and set the projection matrix
         viewport.apply();
-        spriteBatch.setProjectionMatrix(viewport.getCamera().combined);
+        spriteBatch.setProjectionMatrix(viewport.getCamera().combined);//mutators
 
-        // 3. Define movement speed (e.g., 100 pixels per second)
-        float speed = 10000 * delta;  // Adjust speed by delta time for smooth movement
+        // 3. Update the animation state time
+        stateTime += delta;
 
-        // 4. Define the movement boundaries
-        float minX = 0;                              // Left boundary
-        float maxX = viewport.getWorldWidth();     // Right boundary (based on viewport size)
-        float minY = 0;                           // Bottom boundary
-        float maxY = viewport.getWorldHeight();    // Top boundary (based on viewport size)
+        // 4. Calculate movement speed
+        float speed = 300 * delta;
 
-        // 5. Check for user input and move the character
-        if (Gdx.input.isKeyPressed(com.badlogic.gdx.Input.Keys.W) && characterY + speed < maxY) {
-            characterY += speed;  // Move up
-        }
-        if (Gdx.input.isKeyPressed(com.badlogic.gdx.Input.Keys.S) && characterY - speed > minY) {
-            characterY -= speed;  // Move down
-        }
-        if (Gdx.input.isKeyPressed(com.badlogic.gdx.Input.Keys.A) && characterX - speed > minX) {
-            characterX -= speed;  // Move left
-        }
-        if (Gdx.input.isKeyPressed(com.badlogic.gdx.Input.Keys.D) && characterX + speed < maxX) {
-            characterX += speed;  // Move right
-        }
-        if (Gdx.input.isKeyPressed(Input.Keys.UP) && characterY + speed < maxY) {
-            characterY += speed;  // Move up
-        }
-        if (Gdx.input.isKeyPressed(Input.Keys.DOWN) && characterY - speed > minY) {
-            characterY -= speed;  // Move down
-        }
-        if (Gdx.input.isKeyPressed(Input.Keys.LEFT) && characterX - speed > minX) {
-            characterX -= speed;  // Move left
-        }
-        if (Gdx.input.isKeyPressed(Input.Keys.RIGHT) && characterX + speed < maxX) {
-            characterX += speed;  // Move right
-        }
-        if (Gdx.input.isKeyPressed(com.badlogic.gdx.Input.Keys.SPACE)) {}
+        // 5. Define movement boundaries
+        float minX = 0;
+        float maxX = viewport.getWorldWidth();
+        float minY = 0;
+        float maxY = viewport.getWorldHeight();
 
-        // 6. Begin the spriteBatch to draw textures
+        // 6. Check for user input and move the character
+        boolean isMoving = false; // Track if the player is moving
+
+        if (Gdx.input.isKeyPressed(Input.Keys.W) && hitbox.y + hitbox.height + speed < maxY) {
+            characterY += speed;
+            isMoving = true;
+        }
+        if (Gdx.input.isKeyPressed(Input.Keys.S) && hitbox.y - speed > minY) {
+            characterY -= speed;
+            isMoving = true;
+        }
+        if (Gdx.input.isKeyPressed(Input.Keys.A) && hitbox.x - speed > minX) {
+            characterX -= speed;
+            isMoving = true;
+            facingLeft = true; // Character is moving left
+        }
+        if (Gdx.input.isKeyPressed(Input.Keys.D) && hitbox.x + hitbox.width + speed < maxX) {
+            characterX += speed;
+            isMoving = true;
+            facingLeft = false; // Character is moving right
+        }
+
+        // Update hitbox position
+        hitbox.setPosition(characterX, characterY);//mutator for hitbox pos again fkn magic libGdx
+
+        // 7. Start drawing
         spriteBatch.begin();
 
-        // 7. Draw the map (background) first, so the character is drawn on top
-        // spriteBatch.draw(map, 0, 0);
+        // Draw the map (background)
+        spriteBatch.draw(map, 0, 0);
 
-        // 8. Define the scale factor (e.g., 0.5 for half size)
-        float scaleFactor = 0.25f;
+        // 8. Get the current frame of animation
+        TextureRegion currentFrame;
+        if (isMoving) {
+            currentFrame = characterAnimation.getKeyFrame(stateTime, true); // Loop animation
+        } else {
+            currentFrame = characterAnimation.getKeyFrame(0); // Use the first frame for idle state
+        }
 
-        // 9. Draw the character texture at the updated position, scaling its size
-        spriteBatch.draw(
-            character,
-            characterX,
-            characterY,
-            character.getWidth() * scaleFactor,
-            character.getHeight() * scaleFactor
-        );
+        // 9. Check if the frame needs to be flipped based on direction
+        if (facingLeft && !currentFrame.isFlipX()) {
+            currentFrame.flip(true, false); // Flip horizontally if moving left
+        } else if (!facingLeft && currentFrame.isFlipX()) {
+            currentFrame.flip(true, false); // Unflip horizontally if moving right
+        }
 
-        // 10. End the spriteBatch
+
+        // 9. Draw the current frame at the updated position
+        float scaleFactor = 5f;
+        spriteBatch.draw(currentFrame, characterX, characterY,
+            currentFrame.getRegionWidth() * scaleFactor,
+            currentFrame.getRegionHeight() * scaleFactor);
+
+        // 10. End drawing
         spriteBatch.end();
     }
 
-
-
     @Override
     public void pause() {
-        // Invoked when your application is paused.
     }
 
     @Override
     public void resume() {
-        // Invoked when your application is resumed after pause.
     }
 
     @Override
     public void dispose() {
-        // Clean up your application's resources when closing.
-        character.dispose();
+        characterSheet.dispose();
         map.dispose();
         spriteBatch.dispose();
     }
 }
-
