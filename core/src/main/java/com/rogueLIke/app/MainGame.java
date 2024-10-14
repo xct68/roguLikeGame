@@ -58,7 +58,6 @@ public class MainGame implements ApplicationListener {
 
     // Walls for Walls
     private TiledMapTileLayer Walls;
-    private TiledMapTileLayer Walls2;
 
     @Override
     public void create() {
@@ -89,8 +88,8 @@ public class MainGame implements ApplicationListener {
         spriteBatch = new SpriteBatch();
         viewport2 = new ScreenViewport(camera);
 
-        characterX = viewport2.getWorldWidth() / 2;
-        characterY = viewport2.getWorldHeight() / 2;
+        characterX = 120;
+        characterY = 120;
 
         hitbox = new Rectangle(characterX, characterY,
             characterSheet.getWidth() / FRAME_COLS * scaleFactor,
@@ -109,7 +108,6 @@ public class MainGame implements ApplicationListener {
         }
     }
 
-
     @Override
     public void resize(int width, int height) {
         viewport2.update(width, height, true);
@@ -124,6 +122,12 @@ public class MainGame implements ApplicationListener {
         // Clear the screen with the current bgColor color
         ScreenUtils.clear(bgColorColor);
 
+        // Handle input if console is not visible
+        if (!consoleVisible) {
+            handleCharacterMovement(delta); // Call to handle movement
+        }
+
+        // Update the camera
         camera.update();
         camera.position.set(characterX, characterY, 0);
         mapRenderer.setView(camera);
@@ -135,13 +139,10 @@ public class MainGame implements ApplicationListener {
         // Update the animation state time
         stateTime += delta;
 
-        // Handle input if console is not visible
-        if (!consoleVisible) {
-            handleCharacterMovement(delta);
-        }
-
         // Begin drawing
         spriteBatch.begin();
+
+        // Render the map layers
         mapRenderer.render();
 
         // Draw the character animation
@@ -156,44 +157,44 @@ public class MainGame implements ApplicationListener {
     }
 
     private void handleCharacterMovement(float delta) {
-        float speed = movementSpeed * delta;
-
+        float speed = movementSpeed * delta; // Calculate speed based on delta time
         float newCharacterX = characterX;
         float newCharacterY = characterY;
-
         boolean isMoving = false;
 
-        if (Gdx.input.isKeyPressed(Input.Keys.W)) {
+        // Check for input and update position accordingly
+        if (Gdx.input.isKeyPressed(Input.Keys.W)) { // Move up
             newCharacterY += speed;
             if (!isCollidingWithWall(newCharacterX, newCharacterY)) {
                 characterY = newCharacterY;
                 isMoving = true;
             }
         }
-        if (Gdx.input.isKeyPressed(Input.Keys.S)) {
+        if (Gdx.input.isKeyPressed(Input.Keys.S)) { // Move down
             newCharacterY -= speed;
             if (!isCollidingWithWall(newCharacterX, newCharacterY)) {
                 characterY = newCharacterY;
                 isMoving = true;
             }
         }
-        if (Gdx.input.isKeyPressed(Input.Keys.A)) {
+        if (Gdx.input.isKeyPressed(Input.Keys.A)) { // Move left
             newCharacterX -= speed;
             if (!isCollidingWithWall(newCharacterX, newCharacterY)) {
                 characterX = newCharacterX;
                 isMoving = true;
-                facingLeft = true;
+                facingLeft = true; // Update direction facing
             }
         }
-        if (Gdx.input.isKeyPressed(Input.Keys.D)) {
+        if (Gdx.input.isKeyPressed(Input.Keys.D)) { // Move right
             newCharacterX += speed;
             if (!isCollidingWithWall(newCharacterX, newCharacterY)) {
                 characterX = newCharacterX;
                 isMoving = true;
-                facingLeft = false;
+                facingLeft = false; // Update direction facing
             }
         }
 
+        // Update the hitbox position
         hitbox.setPosition(characterX, characterY);
 
         // Open the console if the backtick key is pressed
@@ -330,5 +331,4 @@ public class MainGame implements ApplicationListener {
         font.dispose();
         errorFont.dispose();
     }
-    // Input processor to handle console input
 }

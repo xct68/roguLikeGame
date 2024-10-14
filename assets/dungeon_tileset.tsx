@@ -43,17 +43,17 @@
  </tile>
  <tile id="41">
   <properties>
-   <property name="isWall" type="bool" value="true"/>
+   <property name="isWall" type="bool" value="false"/>
   </properties>
  </tile>
  <tile id="42">
   <properties>
-   <property name="isWall" type="bool" value="true"/>
+   <property name="isWall" type="bool" value="false"/>
   </properties>
  </tile>
  <tile id="43">
   <properties>
-   <property name="isWall" type="bool" value="true"/>
+   <property name="isWall" type="bool" value="false"/>
   </properties>
  </tile>
  <tile id="44">
@@ -73,7 +73,7 @@
  </tile>
  <tile id="57">
   <properties>
-   <property name="isWall" type="bool" value="true"/>
+   <property name="isWall" type="bool" value="false"/>
   </properties>
  </tile>
  <tile id="58">
@@ -93,7 +93,7 @@
  </tile>
  <tile id="61">
   <properties>
-   <property name="isWall" type="bool" value="true"/>
+   <property name="isWall" type="bool" value="false"/>
   </properties>
  </tile>
  <tile id="72">
@@ -138,17 +138,17 @@
  </tile>
  <tile id="92">
   <properties>
-   <property name="isWall" type="bool" value="true"/>
+   <property name="isWall" type="bool" value="false"/>
   </properties>
  </tile>
  <tile id="93">
   <properties>
-   <property name="isWall" type="bool" value="true"/>
+   <property name="isWall" type="bool" value="false"/>
   </properties>
  </tile>
  <tile id="94">
   <properties>
-   <property name="isWall" type="bool" value="true"/>
+   <property name="isWall" type="bool" value="false"/>
   </properties>
  </tile>
  <tile id="95">
