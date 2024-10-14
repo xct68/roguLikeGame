@@ -11,21 +11,23 @@ import com.badlogic.gdx.graphics.g2d.BitmapFont;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.graphics.g2d.TextureRegion;
 import com.badlogic.gdx.maps.tiled.TiledMap;
+import com.badlogic.gdx.maps.tiled.TiledMapTileLayer;
 import com.badlogic.gdx.maps.tiled.renderers.OrthogonalTiledMapRenderer;
 import com.badlogic.gdx.math.Rectangle;
 import com.badlogic.gdx.utils.ScreenUtils;
-import com.badlogic.gdx.utils.viewport.FitViewport;
+import com.badlogic.gdx.utils.viewport.ScreenViewport;
+import com.badlogic.gdx.maps.tiled.TmxMapLoader;
 
 public class MainGame implements ApplicationListener {
     Texture characterSheet;
     SpriteBatch spriteBatch;
-    FitViewport viewport;
-    BitmapFont font; // Font for drawing console text
-    BitmapFont errorFont; // Font for error messages
+    BitmapFont font;
+    BitmapFont errorFont;
 
     private OrthographicCamera camera;
-    private TiledMap map;
+    public static TiledMap map;
     private OrthogonalTiledMapRenderer mapRenderer;
+    private ScreenViewport viewport2;
 
     // Animation-related variables
     private static final int FRAME_COLS = 8, FRAME_ROWS = 1;
@@ -41,18 +43,32 @@ public class MainGame implements ApplicationListener {
     boolean facingLeft;
 
     // Console-related variables
-    boolean consoleVisible = false; // Is the console visible?
-    StringBuilder consoleInput = new StringBuilder(); // User input for console
-    String errorMessage = ""; // Store any error messages for unrecognized commands
+    boolean consoleVisible = false;
+    StringBuilder consoleInput = new StringBuilder();
+    String errorMessage = "";
 
-    // Background color variable
-    Color backgroundColor = Color.BLACK; // Default background color
+    // bgColor color variable
+    Color bgColorColor = Color.BLACK;
 
     // Character movement speed
-    float movementSpeed = 300f; // Default speed
+    float movementSpeed = 300f;
+
+    // Character size scale factor
+    float scaleFactor = 1f;
+
+    // Walls for Walls
+    private TiledMapTileLayer Walls;
+    private TiledMapTileLayer Walls2;
 
     @Override
     public void create() {
+        map = new TmxMapLoader().load("map.tmx");
+        mapRenderer = new OrthogonalTiledMapRenderer(map, 1.0f);
+
+        camera = new OrthographicCamera(16, 10);
+        mapRenderer.setView(camera);
+        camera.update();
+
         characterSheet = new Texture(Gdx.files.internal("character_walk.png"));
 
         // Split the sprite sheet into individual frames
@@ -71,26 +87,32 @@ public class MainGame implements ApplicationListener {
         characterAnimation = new Animation<>(0.1f, characterFrames);
 
         spriteBatch = new SpriteBatch();
-        viewport = new FitViewport(2000, 1000);
+        viewport2 = new ScreenViewport(camera);
 
-        characterX = viewport.getWorldWidth() / 2;
-        characterY = viewport.getWorldHeight() / 2;
+        characterX = viewport2.getWorldWidth() / 2;
+        characterY = viewport2.getWorldHeight() / 2;
 
-        float scaleFactor = 5f;
         hitbox = new Rectangle(characterX, characterY,
             characterSheet.getWidth() / FRAME_COLS * scaleFactor,
             characterSheet.getHeight() * scaleFactor);
 
-        font = new BitmapFont(); // Default font for console text
-        errorFont = new BitmapFont(); // Font for error messages
-        errorFont.setColor(Color.RED); // Error messages are displayed in red
+        font = new BitmapFont();
+        errorFont = new BitmapFont();
+        errorFont.setColor(Color.RED);
 
         stateTime = 0f;
+
+        // Fetch collision layer and add a null check
+        Walls = (TiledMapTileLayer) map.getLayers().get("Walls");
+        if (Walls == null) {
+            Gdx.app.error("Collision Layer", "The collision layer is missing or misnamed in the Tiled map.");
+        }
     }
+
 
     @Override
     public void resize(int width, int height) {
-        viewport.update(width, height, true);
+        viewport2.update(width, height, true);
     }
 
     @Override
@@ -99,12 +121,16 @@ public class MainGame implements ApplicationListener {
     }
 
     public void render(float delta) {
-        // Clear the screen with the current background color
-        ScreenUtils.clear(backgroundColor);
+        // Clear the screen with the current bgColor color
+        ScreenUtils.clear(bgColorColor);
+
+        camera.update();
+        camera.position.set(characterX, characterY, 0);
+        mapRenderer.setView(camera);
 
         // Update the viewport
-        viewport.apply();
-        spriteBatch.setProjectionMatrix(viewport.getCamera().combined);
+        viewport2.apply();
+        spriteBatch.setProjectionMatrix(camera.combined);
 
         // Update the animation state time
         stateTime += delta;
@@ -116,6 +142,7 @@ public class MainGame implements ApplicationListener {
 
         // Begin drawing
         spriteBatch.begin();
+        mapRenderer.render();
 
         // Draw the character animation
         drawCharacter();
@@ -129,42 +156,70 @@ public class MainGame implements ApplicationListener {
     }
 
     private void handleCharacterMovement(float delta) {
-        // Character movement code...
         float speed = movementSpeed * delta;
 
-        float minX = 0;
-        float maxX = viewport.getWorldWidth();
-        float minY = 0;
-        float maxY = viewport.getWorldHeight();
+        float newCharacterX = characterX;
+        float newCharacterY = characterY;
 
         boolean isMoving = false;
 
-        if (Gdx.input.isKeyPressed(Input.Keys.W) && hitbox.y + hitbox.height + speed < maxY) {
-            characterY += speed;
-            isMoving = true;
+        if (Gdx.input.isKeyPressed(Input.Keys.W)) {
+            newCharacterY += speed;
+            if (!isCollidingWithWall(newCharacterX, newCharacterY)) {
+                characterY = newCharacterY;
+                isMoving = true;
+            }
         }
-        if (Gdx.input.isKeyPressed(Input.Keys.S) && hitbox.y - speed > minY) {
-            characterY -= speed;
-            isMoving = true;
+        if (Gdx.input.isKeyPressed(Input.Keys.S)) {
+            newCharacterY -= speed;
+            if (!isCollidingWithWall(newCharacterX, newCharacterY)) {
+                characterY = newCharacterY;
+                isMoving = true;
+            }
         }
-        if (Gdx.input.isKeyPressed(Input.Keys.A) && hitbox.x - speed > minX) {
-            characterX -= speed;
-            isMoving = true;
-            facingLeft = true;
+        if (Gdx.input.isKeyPressed(Input.Keys.A)) {
+            newCharacterX -= speed;
+            if (!isCollidingWithWall(newCharacterX, newCharacterY)) {
+                characterX = newCharacterX;
+                isMoving = true;
+                facingLeft = true;
+            }
         }
-        if (Gdx.input.isKeyPressed(Input.Keys.D) && hitbox.x + hitbox.width + speed < maxX) {
-            characterX += speed;
-            isMoving = true;
-            facingLeft = false;
+        if (Gdx.input.isKeyPressed(Input.Keys.D)) {
+            newCharacterX += speed;
+            if (!isCollidingWithWall(newCharacterX, newCharacterY)) {
+                characterX = newCharacterX;
+                isMoving = true;
+                facingLeft = false;
+            }
         }
 
         hitbox.setPosition(characterX, characterY);
 
         // Open the console if the backtick key is pressed
-        if (Gdx.input.isKeyJustPressed(Input.Keys.GRAVE)) { // ` key is called GRAVE
+        if (Gdx.input.isKeyJustPressed(Input.Keys.GRAVE)) {
             consoleVisible = true;
             Gdx.input.setInputProcessor(new ConsoleInputProcessor());
         }
+    }
+
+    private boolean isCollidingWithWall(float x, float y) {
+        // Convert the character's coordinates to tile coordinates
+        float tileWidth = Walls.getTileWidth();
+        float tileHeight = Walls.getTileHeight();
+
+        int tileX = (int) (x / tileWidth);
+        int tileY = (int) (y / tileHeight);
+
+        // Check if the tile has the "isWall" property
+        TiledMapTileLayer.Cell cell = Walls.getCell(tileX, tileY);
+        if (cell != null && cell.getTile() != null) {
+            Object isWall = cell.getTile().getProperties().get("isWall");
+            if (isWall != null && isWall.equals(true)) {
+                return true; // There is a wall, so prevent movement
+            }
+        }
+        return false; // No wall, movement allowed
     }
 
     private void drawCharacter() {
@@ -178,7 +233,6 @@ public class MainGame implements ApplicationListener {
             currentFrame.flip(true, false);
         }
 
-        float scaleFactor = 5f;
         spriteBatch.draw(currentFrame, characterX, characterY,
             currentFrame.getRegionWidth() * scaleFactor,
             currentFrame.getRegionHeight() * scaleFactor);
@@ -187,11 +241,11 @@ public class MainGame implements ApplicationListener {
     private void drawConsole() {
         // Draw a simple console box and the current input
         font.setColor(Color.WHITE);
-        font.draw(spriteBatch, "Console: " + consoleInput.toString(), 20, viewport.getWorldHeight() - 20);
+        font.draw(spriteBatch, "Console: " + consoleInput.toString(), 20, viewport2.getWorldHeight() - 20);
 
         // Display error message if any
         if (!errorMessage.isEmpty()) {
-            errorFont.draw(spriteBatch, errorMessage, 20, viewport.getWorldHeight() - 60);
+            errorFont.draw(spriteBatch, errorMessage, 20, viewport2.getWorldHeight() - 60);
         }
     }
 
@@ -200,22 +254,6 @@ public class MainGame implements ApplicationListener {
             Gdx.input.isKeyPressed(Input.Keys.A) || Gdx.input.isKeyPressed(Input.Keys.D);
     }
 
-    @Override
-    public void pause() {}
-
-    @Override
-    public void resume() {}
-
-    @Override
-    public void dispose() {
-        characterSheet.dispose();
-        map.dispose();
-        spriteBatch.dispose();
-        font.dispose();
-        errorFont.dispose();
-    }
-
-    // Input processor to handle console input
     class ConsoleInputProcessor extends com.badlogic.gdx.InputAdapter {
         @Override
         public boolean keyTyped(char character) {
@@ -248,9 +286,9 @@ public class MainGame implements ApplicationListener {
         if (command.equals("quit")) {
             Gdx.app.exit(); // Exit the game
         } else if (command.equals("bg white")) {
-            backgroundColor = Color.WHITE; // Change background to white
+            bgColorColor = Color.WHITE; // Change bgColor to white
         } else if (command.equals("bg black")) {
-            backgroundColor = Color.BLACK; // Change background to black
+            bgColorColor = Color.BLACK; // Change bgColor to black
         } else if (command.startsWith("speed ")) {
             try {
                 float newSpeed = Float.parseFloat(command.split(" ")[1]);
@@ -261,8 +299,36 @@ public class MainGame implements ApplicationListener {
         } else if (command.equals("speed")) {
             // Print current speed
             errorMessage = "Current speed: " + movementSpeed; // Display the current speed
+        } else if (command.startsWith("size ")) {
+            try {
+                float newSize = Float.parseFloat(command.split(" ")[1]);
+                scaleFactor = newSize; // Update the scale factor
+                hitbox.setSize(characterSheet.getWidth() / FRAME_COLS * scaleFactor,
+                    characterSheet.getHeight() * scaleFactor); // Update hitbox size
+            } catch (NumberFormatException | ArrayIndexOutOfBoundsException e) {
+                errorMessage = "Invalid size value!"; // Show error if the input is not a valid number
+            }
+        } else if (command.equals("size")) {
+            // Print current size
+            errorMessage = "Current size: " + scaleFactor; // Display the current size
         } else {
             errorMessage = "Command not recognized"; // Show error for unrecognized commands
         }
     }
+
+    @Override
+    public void pause() {}
+
+    @Override
+    public void resume() {}
+
+    @Override
+    public void dispose() {
+        characterSheet.dispose();
+        map.dispose();
+        spriteBatch.dispose();
+        font.dispose();
+        errorFont.dispose();
+    }
+    // Input processor to handle console input
 }
