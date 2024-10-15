@@ -209,8 +209,8 @@ public class MainGame implements ApplicationListener {
         float tileWidth = Walls.getTileWidth();
         float tileHeight = Walls.getTileHeight();
 
-        int tileX = (int) (x / tileWidth);
-        int tileY = (int) (y / tileHeight);
+        int tileX = Math.round(x/tileWidth);
+        int tileY = Math.round(y/tileHeight);
 
         // Check if the tile has the "isWall" property
         TiledMapTileLayer.Cell cell = Walls.getCell(tileX, tileY);
@@ -304,7 +304,7 @@ public class MainGame implements ApplicationListener {
             try {
                 float newSize = Float.parseFloat(command.split(" ")[1]);
                 scaleFactor = newSize; // Update the scale factor
-                hitbox.setSize(characterSheet.getWidth() / FRAME_COLS * scaleFactor,
+                hitbox.setSize((float) characterSheet.getWidth() / FRAME_COLS * scaleFactor,
                     characterSheet.getHeight() * scaleFactor); // Update hitbox size
             } catch (NumberFormatException | ArrayIndexOutOfBoundsException e) {
                 errorMessage = "Invalid size value!"; // Show error if the input is not a valid number

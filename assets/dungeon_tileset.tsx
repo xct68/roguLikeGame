@@ -73,7 +73,7 @@
  </tile>
  <tile id="57">
   <properties>
-   <property name="isWall" type="bool" value="false"/>
+   <property name="isWall" type="bool" value="true"/>
   </properties>
  </tile>
  <tile id="58">
@@ -93,7 +93,7 @@
  </tile>
  <tile id="61">
   <properties>
-   <property name="isWall" type="bool" value="false"/>
+   <property name="isWall" type="bool" value="true"/>
   </properties>
  </tile>
  <tile id="72">
