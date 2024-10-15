@@ -55,6 +55,7 @@ public class MainGame implements ApplicationListener {
 
     // Character size scale factor
     float scaleFactor = 1f;
+    float mapScaleFactor = 5f;
 
     // Walls for Walls
     private TiledMapTileLayer Walls;
@@ -62,7 +63,7 @@ public class MainGame implements ApplicationListener {
     @Override
     public void create() {
         map = new TmxMapLoader().load("map.tmx");
-        mapRenderer = new OrthogonalTiledMapRenderer(map, 1.0f);
+        mapRenderer = new OrthogonalTiledMapRenderer(map, mapScaleFactor);
 
         camera = new OrthographicCamera(16, 10);
         mapRenderer.setView(camera);
@@ -92,7 +93,7 @@ public class MainGame implements ApplicationListener {
         characterY = 120;
 
         hitbox = new Rectangle(characterX, characterY,
-            characterSheet.getWidth() / FRAME_COLS * scaleFactor,
+            (characterSheet.getWidth() / FRAME_COLS) * scaleFactor,
             characterSheet.getHeight() * scaleFactor);
 
         font = new BitmapFont();
@@ -206,8 +207,8 @@ public class MainGame implements ApplicationListener {
 
     private boolean isCollidingWithWall(float x, float y) {
         // Convert the character's coordinates to tile coordinates
-        float tileWidth = Walls.getTileWidth();
-        float tileHeight = Walls.getTileHeight();
+        float tileWidth = (Walls.getTileWidth() * mapScaleFactor);
+        float tileHeight = (Walls.getTileHeight() * mapScaleFactor);
 
         int tileX = Math.round(x/tileWidth);
         int tileY = Math.round(y/tileHeight);

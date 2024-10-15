@@ -33,42 +33,37 @@ public class ConsoleInputProcessor implements InputProcessor {
     }
 
     @Override
-    public boolean touchDown(int screenX, int screenY, int pointer, int button) {
-        return false; // Handle touch down events if needed
+    public boolean touchDown(int i, int i1, int i2, int i3) {
+        return false;
     }
 
     @Override
-    public boolean touchUp(int screenX, int screenY, int pointer, int button) {
-        return false; // Handle touch up events if needed
+    public boolean touchUp(int i, int i1, int i2, int i3) {
+        return false;
     }
 
     @Override
-    public boolean touchDragged(int screenX, int screenY, int pointer) {
-        return false; // Handle touch dragged events if needed
+    public boolean touchCancelled(int i, int i1, int i2, int i3) {
+        return false;
     }
 
     @Override
-    public boolean mouseMoved(int screenX, int screenY) {
-        return false; // Handle mouse movement if needed
+    public boolean touchDragged(int i, int i1, int i2) {
+        return false;
     }
 
     @Override
-    public boolean scrolled(float amountX, float amountY) {
-        // Handle scroll events here if needed
-        return false; // Returning false to indicate not handled
+    public boolean mouseMoved(int i, int i1) {
+        return false;
     }
 
     @Override
-    public boolean touchCancelled(int screenX, int screenY, int pointer, int button) {
-        return false; // Handle touch cancel events if needed
+    public boolean scrolled(float v, float v1) {
+        return false;
     }
 
     private void processCommand(String command) {
         // Implement your command processing logic here
         System.out.println("Command entered: " + command);
-    }
-
-    public String getInput() {
-        return input.toString();
     }
 }
