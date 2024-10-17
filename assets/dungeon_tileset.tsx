@@ -23,7 +23,7 @@
  </tile>
  <tile id="27">
   <properties>
-   <property name="isWall" type="bool" value="true"/>
+   <property name="isWall" type="bool" value="false"/>
   </properties>
  </tile>
  <tile id="38">
@@ -58,7 +58,7 @@
  </tile>
  <tile id="44">
   <properties>
-   <property name="isWall" type="bool" value="true"/>
+   <property name="isWall" type="bool" value="false"/>
   </properties>
  </tile>
  <tile id="55">
@@ -129,6 +129,11 @@
  <tile id="78">
   <properties>
    <property name="isWall" type="bool" value="true"/>
+  </properties>
+ </tile>
+ <tile id="81">
+  <properties>
+   <property name="isCoin" type="bool" value="true"/>
   </properties>
  </tile>
  <tile id="91">

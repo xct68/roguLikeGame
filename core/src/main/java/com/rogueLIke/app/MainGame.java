@@ -19,6 +19,8 @@ import com.badlogic.gdx.utils.viewport.ScreenViewport;
 import com.badlogic.gdx.maps.tiled.TmxMapLoader;
 
 public class MainGame implements ApplicationListener {
+
+
     Texture characterSheet;
     SpriteBatch spriteBatch;
     BitmapFont font;
@@ -51,14 +53,18 @@ public class MainGame implements ApplicationListener {
     Color bgColorColor = Color.BLACK;
 
     // Character movement speed
-    float movementSpeed = 300f;
+    float movementSpeed = 1000f;
 
     // Character size scale factor
-    float scaleFactor = 1f;
-    float mapScaleFactor = 5f;
+    float scaleFactor = 8f;
+    float mapScaleFactor = 8f;
 
     // Walls for Walls
     private TiledMapTileLayer Walls;
+
+    //Coin related variables
+    private TiledMapTileLayer coins;
+    private int coinsCollected;
 
     @Override
     public void create() {
@@ -93,7 +99,7 @@ public class MainGame implements ApplicationListener {
         characterY = 120;
 
         hitbox = new Rectangle(characterX, characterY,
-            (characterSheet.getWidth() / FRAME_COLS) * scaleFactor,
+            (((float) characterSheet.getWidth() / FRAME_COLS) * scaleFactor),
             characterSheet.getHeight() * scaleFactor);
 
         font = new BitmapFont();
@@ -107,12 +113,20 @@ public class MainGame implements ApplicationListener {
         if (Walls == null) {
             Gdx.app.error("Collision Layer", "The collision layer is missing or misnamed in the Tiled map.");
         }
+
+        coins = (TiledMapTileLayer) map.getLayers().get("Coins");
+        if (coins == null) {
+            Gdx.app.error("Coin Layer", "The coin layer is missing or misnamed in the Tiled map.");
+
+        }
     }
 
     @Override
     public void resize(int width, int height) {
         viewport2.update(width, height, true);
     }
+
+
 
     @Override
     public void render() {
@@ -143,6 +157,9 @@ public class MainGame implements ApplicationListener {
         // Begin drawing
         spriteBatch.begin();
 
+        font.setColor(Color.YELLOW);
+        font.draw(spriteBatch, "Coins: " + coinsCollected, (characterX -20) , (characterY + 20));
+
         // Render the map layers
         mapRenderer.render();
 
@@ -154,7 +171,59 @@ public class MainGame implements ApplicationListener {
             drawConsole();
         }
 
+
+
         spriteBatch.end();
+    }
+
+    private void checkForCoinCollection() {
+        if (coins == null) {
+            return; // If coin layer is not present, return
+        }
+
+        float tileWidth = coins.getTileWidth() * mapScaleFactor;
+        float tileHeight = coins.getTileHeight() * mapScaleFactor;
+
+        int tileX = Math.round(characterX / tileWidth);
+        int tileY = Math.round(characterY / tileHeight);
+
+        // Get the cell at the character's position
+        TiledMapTileLayer.Cell cell = coins.getCell(tileX, tileY);
+        if (cell != null && cell.getTile() != null) {
+            // Check if the tile has the "isCoin" property or is in the coin layer
+            Object isCoin = cell.getTile().getProperties().get("isCoin");
+            if (isCoin != null && isCoin.equals(true)) {
+                // Remove the coin by setting the cell to null
+                coins.setCell(tileX, tileY, null);
+                coinsCollected++; // Increment the number of coins collected
+                Gdx.app.log("Coins", "Coins collected: " + coinsCollected);
+            }
+        }
+    }
+
+    private boolean isCollidingWithWall(float x, float y) {
+        // Check if Walls layer is null before proceeding
+        if (Walls == null) {
+            Gdx.app.error("Collision Check", "Walls layer is not initialized.");
+            return false; // Skip collision checks if layer is not available
+        }
+
+        // Same for Walls2 if it's supposed to be used
+        float tileWidth = (Walls.getTileWidth() * mapScaleFactor);
+        float tileHeight = (Walls.getTileHeight() * mapScaleFactor);
+
+        int tileX = Math.round(x / tileWidth);
+        int tileY = Math.round(y / tileHeight);
+
+        // Check if the tile has the "isWall" property
+        TiledMapTileLayer.Cell cell = Walls.getCell(tileX, tileY);
+        if (cell != null && cell.getTile() != null) {
+            Object isWall = cell.getTile().getProperties().get("isWall");
+            if (isWall != null && isWall.equals(true)) {
+                return true; // There is a wall, so prevent movement
+            }
+        }
+        return false; // No wall, movement allowed
     }
 
     private void handleCharacterMovement(float delta) {
@@ -195,6 +264,9 @@ public class MainGame implements ApplicationListener {
             }
         }
 
+        // Check if character overlaps with a coin
+        checkForCoinCollection();
+
         // Update the hitbox position
         hitbox.setPosition(characterX, characterY);
 
@@ -205,24 +277,10 @@ public class MainGame implements ApplicationListener {
         }
     }
 
-    private boolean isCollidingWithWall(float x, float y) {
-        // Convert the character's coordinates to tile coordinates
-        float tileWidth = (Walls.getTileWidth() * mapScaleFactor);
-        float tileHeight = (Walls.getTileHeight() * mapScaleFactor);
 
-        int tileX = Math.round(x/tileWidth);
-        int tileY = Math.round(y/tileHeight);
 
-        // Check if the tile has the "isWall" property
-        TiledMapTileLayer.Cell cell = Walls.getCell(tileX, tileY);
-        if (cell != null && cell.getTile() != null) {
-            Object isWall = cell.getTile().getProperties().get("isWall");
-            if (isWall != null && isWall.equals(true)) {
-                return true; // There is a wall, so prevent movement
-            }
-        }
-        return false; // No wall, movement allowed
-    }
+
+
 
     private void drawCharacter() {
         TextureRegion currentFrame = isMoving() ?
