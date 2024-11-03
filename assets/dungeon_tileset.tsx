@@ -131,6 +131,11 @@
    <property name="isWall" type="bool" value="true"/>
   </properties>
  </tile>
+ <tile id="80">
+  <properties>
+   <property name="hiddenCoin" type="bool" value="true"/>
+  </properties>
+ </tile>
  <tile id="81">
   <properties>
    <property name="isCoin" type="bool" value="true"/>

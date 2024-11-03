@@ -17,11 +17,13 @@ import com.badlogic.gdx.math.Rectangle;
 import com.badlogic.gdx.utils.ScreenUtils;
 import com.badlogic.gdx.utils.viewport.ScreenViewport;
 import com.badlogic.gdx.maps.tiled.TmxMapLoader;
+import java.util.ArrayList;
 
 public class MainGame implements ApplicationListener {
 
 
     Texture characterSheet;
+    Texture attack;
     SpriteBatch spriteBatch;
     BitmapFont font;
     BitmapFont errorFont;
@@ -33,6 +35,8 @@ public class MainGame implements ApplicationListener {
 
     // Animation-related variables
     private static final int FRAME_COLS = 8, FRAME_ROWS = 1;
+    private static final int ATTACK_FRAME_COLS = 4, ATTACK_FRAME_ROWS = 1;
+    Animation<TextureRegion> attackAnimation;
     Animation<TextureRegion> characterAnimation;
     float stateTime;
 
@@ -66,8 +70,14 @@ public class MainGame implements ApplicationListener {
     private TiledMapTileLayer coins;
     private int coinsCollected;
 
-    @Override
+    boolean isAttacking = false;
+
+
     public void create() {
+        ArrayList mobs = new ArrayList();
+        mobs.add("zombie");
+        mobs.add("ghost");
+
         map = new TmxMapLoader().load("map.tmx");
         mapRenderer = new OrthogonalTiledMapRenderer(map, mapScaleFactor);
 
@@ -76,6 +86,7 @@ public class MainGame implements ApplicationListener {
         camera.update();
 
         characterSheet = new Texture(Gdx.files.internal("character_walk.png"));
+        attack = new Texture(Gdx.files.internal("character_attack.png"));
 
         // Split the sprite sheet into individual frames
         TextureRegion[][] tmp = TextureRegion.split(characterSheet,
@@ -92,6 +103,18 @@ public class MainGame implements ApplicationListener {
 
         characterAnimation = new Animation<>(0.1f, characterFrames);
 
+        TextureRegion[][] attackTmp = TextureRegion.split(attack,
+            attack.getWidth() / ATTACK_FRAME_COLS,
+            attack.getHeight() / ATTACK_FRAME_ROWS);
+        TextureRegion[] attackFrames = new TextureRegion[ATTACK_FRAME_COLS];
+        int index1 = 0;
+        for (int i = 0; i < ATTACK_FRAME_ROWS; i++) {
+            for (int j = 0; j < ATTACK_FRAME_COLS; j++) {
+                attackFrames[index1++] = attackTmp[i][j];
+            }
+        }
+        attackAnimation = new Animation<>(0.1f, attackFrames);
+
         spriteBatch = new SpriteBatch();
         viewport2 = new ScreenViewport(camera);
 
@@ -103,6 +126,7 @@ public class MainGame implements ApplicationListener {
             characterSheet.getHeight() * scaleFactor);
 
         font = new BitmapFont();
+        font.getData().setScale(2, 2);
         errorFont = new BitmapFont();
         errorFont.setColor(Color.RED);
 
@@ -121,14 +145,14 @@ public class MainGame implements ApplicationListener {
         }
     }
 
-    @Override
+
     public void resize(int width, int height) {
         viewport2.update(width, height, true);
     }
 
 
 
-    @Override
+
     public void render() {
         render(Gdx.graphics.getDeltaTime());
     }
@@ -157,8 +181,8 @@ public class MainGame implements ApplicationListener {
         // Begin drawing
         spriteBatch.begin();
 
-        font.setColor(Color.YELLOW);
-        font.draw(spriteBatch, "Coins: " + coinsCollected, (characterX -20) , (characterY + 20));
+        font.setColor(Color.GOLD);
+        font.draw(spriteBatch, "Coins: " + coinsCollected, (characterX -1200) , (characterY + 700));
 
         // Render the map layers
         mapRenderer.render();
@@ -170,8 +194,6 @@ public class MainGame implements ApplicationListener {
         if (consoleVisible) {
             drawConsole();
         }
-
-
 
         spriteBatch.end();
     }
@@ -270,6 +292,16 @@ public class MainGame implements ApplicationListener {
         // Update the hitbox position
         hitbox.setPosition(characterX, characterY);
 
+        if (Gdx.input.isButtonJustPressed(Input.Buttons.LEFT)) {
+            Gdx.app.log("Attack", "Left mouse button pressed - starting attack");
+            isAttacking = true;
+            stateTime = 0f; // Reset state time for attack animation
+        }
+
+        if (isAttacking && attackAnimation.isAnimationFinished(stateTime)) {
+            isAttacking = false;
+        }
+
         // Open the console if the backtick key is pressed
         if (Gdx.input.isKeyJustPressed(Input.Keys.GRAVE)) {
             consoleVisible = true;
@@ -283,16 +315,26 @@ public class MainGame implements ApplicationListener {
 
 
     private void drawCharacter() {
-        TextureRegion currentFrame = isMoving() ?
-            characterAnimation.getKeyFrame(stateTime, true) :
-            characterAnimation.getKeyFrame(0);
+        TextureRegion currentFrame;
 
+        if (isAttacking) {
+            // If attacking, get the current frame from the attack animation
+            currentFrame = attackAnimation.getKeyFrame(stateTime, false); // `false` to ensure it doesn't loop
+        } else {
+            // Otherwise, use the character animation frames
+            currentFrame = isMoving() ?
+                characterAnimation.getKeyFrame(stateTime, true) :
+                characterAnimation.getKeyFrame(0);
+        }
+
+        // Flip the frame based on facing direction
         if (facingLeft && !currentFrame.isFlipX()) {
             currentFrame.flip(true, false);
         } else if (!facingLeft && currentFrame.isFlipX()) {
             currentFrame.flip(true, false);
         }
 
+        // Draw the current frame
         spriteBatch.draw(currentFrame, characterX, characterY,
             currentFrame.getRegionWidth() * scaleFactor,
             currentFrame.getRegionHeight() * scaleFactor);
@@ -315,7 +357,7 @@ public class MainGame implements ApplicationListener {
     }
 
     class ConsoleInputProcessor extends com.badlogic.gdx.InputAdapter {
-        @Override
+
         public boolean keyTyped(char character) {
             if (character == '\b') { // Handle backspace
                 if (consoleInput.length() > 0) {
@@ -330,7 +372,7 @@ public class MainGame implements ApplicationListener {
             return true;
         }
 
-        @Override
+
         public boolean keyDown(int keycode) {
             if (keycode == Input.Keys.ESCAPE || keycode == Input.Keys.GRAVE) { // Close console with ESC or `
                 consoleVisible = false;
@@ -376,13 +418,13 @@ public class MainGame implements ApplicationListener {
         }
     }
 
-    @Override
+
     public void pause() {}
 
-    @Override
+
     public void resume() {}
 
-    @Override
+
     public void dispose() {
         characterSheet.dispose();
         map.dispose();
