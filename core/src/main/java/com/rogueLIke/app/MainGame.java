@@ -24,6 +24,7 @@ public class MainGame implements ApplicationListener {
 
     Texture characterSheet;
     Texture attack;
+    Texture ghost;
     SpriteBatch spriteBatch;
     BitmapFont font;
     BitmapFont errorFont;
@@ -43,10 +44,13 @@ public class MainGame implements ApplicationListener {
     // Character position variables
     float characterX;
     float characterY;
+    float ghostX;
+    float ghostY;
 
     Rectangle hitbox;
 
     boolean facingLeft;
+    boolean ghostFacingLeft;
 
     // Console-related variables
     boolean consoleVisible = false;
@@ -57,11 +61,13 @@ public class MainGame implements ApplicationListener {
     Color bgColorColor = Color.BLACK;
 
     // Character movement speed
-    float movementSpeed = 1000f;
+    float movementSpeed = 900f;
+    float ghostMovementSpeed = 300f;
 
     // Character size scale factor
     float scaleFactor = 8f;
-    float mapScaleFactor = 8f;
+    float mapScaleFactor = 6f;
+    float ghostScaleFactor = 4f;
 
     // Walls for Walls
     private TiledMapTileLayer Walls;
@@ -87,6 +93,7 @@ public class MainGame implements ApplicationListener {
 
         characterSheet = new Texture(Gdx.files.internal("character_walk.png"));
         attack = new Texture(Gdx.files.internal("character_attack.png"));
+	ghost = new Texture(Gdx.files.internal("ghost.png"));
 
         // Split the sprite sheet into individual frames
         TextureRegion[][] tmp = TextureRegion.split(characterSheet,
@@ -120,6 +127,9 @@ public class MainGame implements ApplicationListener {
 
         characterX = 120;
         characterY = 120;
+
+	ghostX = 120;
+	ghostY = 120;
 
         hitbox = new Rectangle(characterX, characterY,
             (((float) characterSheet.getWidth() / FRAME_COLS) * scaleFactor),
@@ -187,8 +197,9 @@ public class MainGame implements ApplicationListener {
         // Render the map layers
         mapRenderer.render();
 
-        // Draw the character animation
+        // Draw character and Enemies
         drawCharacter();
+	drawEnemies();
 
         // Draw the console if it's visible
         if (consoleVisible) {
@@ -249,7 +260,8 @@ public class MainGame implements ApplicationListener {
     }
 
     private void handleCharacterMovement(float delta) {
-        float speed = movementSpeed * delta; // Calculate speed based on delta time
+        float speed = movementSpeed * delta;// Calculate speed based on delta time
+        float sprintSpeed = (float) (1.5 * (movementSpeed * delta));
         float newCharacterX = characterX;
         float newCharacterY = characterY;
         boolean isMoving = false;
@@ -285,7 +297,6 @@ public class MainGame implements ApplicationListener {
                 facingLeft = false; // Update direction facing
             }
         }
-
         // Check if character overlaps with a coin
         checkForCoinCollection();
 
@@ -338,6 +349,31 @@ public class MainGame implements ApplicationListener {
         spriteBatch.draw(currentFrame, characterX, characterY,
             currentFrame.getRegionWidth() * scaleFactor,
             currentFrame.getRegionHeight() * scaleFactor);
+    }
+    private void drawEnemies(){
+        if (ghostX > characterX) {
+            ghostX -= ghostMovementSpeed * Gdx.graphics.getDeltaTime();
+            ghostFacingLeft = true;
+        } else if (ghostX < characterX) {
+            ghostX += ghostMovementSpeed * Gdx.graphics.getDeltaTime();
+            ghostFacingLeft = false;
+        }
+
+        if (ghostY > characterY) {
+            ghostY -= ghostMovementSpeed * Gdx.graphics.getDeltaTime();
+        } else if (ghostY < characterY) {
+            ghostY += ghostMovementSpeed * Gdx.graphics.getDeltaTime();
+        }
+
+        if (ghostFacingLeft) {
+            spriteBatch.draw(ghost, ghostX + ghost.getWidth() * ghostScaleFactor, ghostY,
+                -ghost.getWidth() * ghostScaleFactor, ghost.getHeight() * ghostScaleFactor);
+        } else {
+            spriteBatch.draw(ghost, ghostX, ghostY,
+                ghost.getWidth() * ghostScaleFactor, ghost.getHeight() * ghostScaleFactor);
+        }
+
+
     }
 
     private void drawConsole() {
@@ -431,5 +467,6 @@ public class MainGame implements ApplicationListener {
         spriteBatch.dispose();
         font.dispose();
         errorFont.dispose();
+	ghost.dispose();
     }
 }
