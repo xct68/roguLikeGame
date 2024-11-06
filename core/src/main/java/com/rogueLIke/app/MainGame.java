@@ -62,7 +62,7 @@ public class MainGame implements ApplicationListener {
 
     // Character movement speed
     float movementSpeed = 900f;
-    float ghostMovementSpeed = 300f;
+    float ghostMovementSpeed = 800f;
 
     // Character size scale factor
     float scaleFactor = 8f;
@@ -350,21 +350,45 @@ public class MainGame implements ApplicationListener {
             currentFrame.getRegionWidth() * scaleFactor,
             currentFrame.getRegionHeight() * scaleFactor);
     }
-    private void drawEnemies(){
-        if (ghostX > characterX) {
-            ghostX -= ghostMovementSpeed * Gdx.graphics.getDeltaTime();
-            ghostFacingLeft = true;
-        } else if (ghostX < characterX) {
-            ghostX += ghostMovementSpeed * Gdx.graphics.getDeltaTime();
-            ghostFacingLeft = false;
+    private float distanceToPlayer() {
+        return (float) Math.sqrt(Math.pow(characterX - ghostX, 2) + Math.pow(characterY - ghostY, 2));
+    }
+
+    // Determine whether the ghost can move in a given direction
+    private boolean canMoveTo(float x, float y) {
+        return !isCollidingWithWall(x, y);
+    }
+
+    private void drawEnemies() {
+        // Set a proximity threshold to stop if close enough to player
+        float proximityThreshold = 10f * mapScaleFactor;
+
+        if (distanceToPlayer() > proximityThreshold) { // Move only if ghost is far enough
+            // Calculate potential new positions for the ghost
+            float deltaX = (characterX > ghostX ? ghostMovementSpeed : -ghostMovementSpeed) * Gdx.graphics.getDeltaTime();
+            float deltaY = (characterY > ghostY ? ghostMovementSpeed : -ghostMovementSpeed) * Gdx.graphics.getDeltaTime();
+
+            // Try to move horizontally toward the player if there's no wall
+            if (Math.abs(characterX - ghostX) > Math.abs(characterY - ghostY)) {
+                // Prioritize horizontal movement
+                if (canMoveTo(ghostX + deltaX, ghostY)) {
+                    ghostX += deltaX;
+                    ghostFacingLeft = deltaX < 0; // Update ghost direction
+                } else if (canMoveTo(ghostX, ghostY + deltaY)) { // Try vertical if blocked
+                    ghostY += deltaY;
+                }
+            } else {
+                // Prioritize vertical movement
+                if (canMoveTo(ghostX, ghostY + deltaY)) {
+                    ghostY += deltaY;
+                } else if (canMoveTo(ghostX + deltaX, ghostY)) { // Try horizontal if blocked
+                    ghostX += deltaX;
+                    ghostFacingLeft = deltaX < 0;
+                }
+            }
         }
 
-        if (ghostY > characterY) {
-            ghostY -= ghostMovementSpeed * Gdx.graphics.getDeltaTime();
-        } else if (ghostY < characterY) {
-            ghostY += ghostMovementSpeed * Gdx.graphics.getDeltaTime();
-        }
-
+        // Draw the ghost with the updated position and facing direction
         if (ghostFacingLeft) {
             spriteBatch.draw(ghost, ghostX + ghost.getWidth() * ghostScaleFactor, ghostY,
                 -ghost.getWidth() * ghostScaleFactor, ghost.getHeight() * ghostScaleFactor);
@@ -372,8 +396,6 @@ public class MainGame implements ApplicationListener {
             spriteBatch.draw(ghost, ghostX, ghostY,
                 ghost.getWidth() * ghostScaleFactor, ghost.getHeight() * ghostScaleFactor);
         }
-
-
     }
 
     private void drawConsole() {
